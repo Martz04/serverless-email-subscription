@@ -1,0 +1,73 @@
+service: final-daily-inspiration-python
+frameworkVersion: '3'
+
+custom:
+  tableName: 'email-subscription-table-${self:provider.stage}'
+  pythonRequirements:
+    dockerizePip: true
+  localstack:
+    stages:
+      - local
+    host: http://localhost
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: us-east-1
+  profile: martz-personal
+  stage: dev
+  timeout: 10
+  memorySize: 128
+  deploymentBucket:
+    name: ${self:service}-${opt:stage, self:provider.stage}-deployment-bucket
+    serverSideEncryption: AES256
+  environment:
+    REGION_NAME: ${self:provider.region}
+    DYNAMODB_TABLE: ${self:custom.tableName}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [ EmailsTable, Arn ]
+        - Effect: Allow
+          Action: "s3:*"
+          Resource: "*"
+
+
+resources:
+  Resources:
+    EmailsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.tableName}
+
+functions:
+  hello:
+    handler: src/handler.hello
+    events:
+      - http:
+          path: /
+          method: get
+          cors: true
+
+plugins:
+  - serverless-deployment-bucket
+  - serverless-python-requirements
+  - serverless-localstack
