@@ -3,6 +3,7 @@ frameworkVersion: '3'
 
 custom:
   tableName: 'email-subscription-table-${self:provider.stage}'
+  bucketName: 'email-subscription-quotes-${self:provider.stage}'
   pythonRequirements:
     dockerizePip: true
   localstack:
@@ -24,6 +25,7 @@ provider:
   environment:
     REGION_NAME: ${self:provider.region}
     DYNAMODB_TABLE: ${self:custom.tableName}
+    BUCKET_NAME: ${self:custom.bucketName}
   iam:
     role:
       statements:
@@ -40,7 +42,6 @@ provider:
         - Effect: Allow
           Action: "s3:*"
           Resource: "*"
-
 
 resources:
   Resources:
@@ -59,12 +60,19 @@ resources:
         TableName: ${self:custom.tableName}
 
 functions:
-  hello:
-    handler: src/handler.hello
+  quotes:
+    handler: src/quotes_handler.get_quotes
     events:
       - http:
-          path: /
+          path: quotes
           method: get
+          cors: true
+  subscribe:
+    handler: src/subscribe_user_handler.subscribe
+    events:
+      - http:
+          path: subscribe
+          method: post
           cors: true
 
 plugins:

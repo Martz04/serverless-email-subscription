@@ -28,18 +28,26 @@ At startup localstack runs localstack-init.sh and runs below commands:
 Currently the quotes.json file should be placed inside a manually generated S3 bucket for this project to work.
 
     aws s3api create-bucket \
-    --bucket my-bucket \
+    --bucket email-subscription-quotes-dev \
     --region us-east-1 \
     --endpoint-url http://localhost:4566
 
 Upload Json file
 
-    aws s3 cp quotes.json s3://my-bucket/ --endpoint-url http://localhost:4566
+    aws s3 cp quotes.json s3://email-subscription-quotes-dev/ --endpoint-url http://localhost:4566
 
 To verify S3 bucket installation
 
-	aws s3 ls s3://my-bucket/ --endpoint-url  http://localhost:4566
+	aws s3 ls s3://email-subscription-quotes-dev/ --endpoint-url  http://localhost:4566
 
-To run the healthcheck
+To run the lambda
 
-	sls invoke -f hello --stage local
+	sls invoke -f quotes --stage local
+
+To run thru the API Gateway, you'll see something like this when deployed to localstack
+
+	http://localhost:4566/restapis/cq840kuv4z/local/_user_request_
+
+Using that ID after resapis you can use the following command to obtain the URL:
+	
+	awslocal apigateway get-resources --rest-api-id cq840kuv4z 

@@ -1,0 +1,4 @@
+# local
+boto3
+requests
+pytest
